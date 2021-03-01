@@ -14,6 +14,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/c9s/bbgo/pkg/datatype"
 	"github.com/c9s/bbgo/pkg/fixedpoint"
 	"github.com/c9s/bbgo/pkg/types"
 	"github.com/c9s/bbgo/pkg/util"
@@ -193,7 +194,7 @@ func (e *Exchange) QueryIsolatedMarginAccount(ctx context.Context, symbols ...st
 	return toGlobalIsolatedMarginAccount(account), nil
 }
 
-func (e *Exchange) QueryWithdrawHistory(ctx context.Context, asset string, since, until time.Time) (allWithdraws []types.Withdraw, err error) {
+func (e *Exchange) QueryWithdrawalHistory(ctx context.Context, asset string, since, until time.Time) (allWithdraws []types.Withdrawal, err error) {
 
 	startTime := since
 	txIDs := map[string]struct{}{}
@@ -246,8 +247,9 @@ func (e *Exchange) QueryWithdrawHistory(ctx context.Context, asset string, since
 			}
 
 			txIDs[d.TxID] = struct{}{}
-			allWithdraws = append(allWithdraws, types.Withdraw{
-				ApplyTime:       time.Unix(0, d.ApplyTime*int64(time.Millisecond)),
+			allWithdraws = append(allWithdraws, types.Withdrawal{
+				Exchange:        types.ExchangeBinance,
+				ApplyTime:       datatype.Time(time.Unix(0, d.ApplyTime*int64(time.Millisecond))),
 				Asset:           d.Asset,
 				Amount:          d.Amount,
 				Address:         d.Address,
@@ -311,7 +313,8 @@ func (e *Exchange) QueryDepositHistory(ctx context.Context, asset string, since,
 
 			txIDs[d.TxID] = struct{}{}
 			allDeposits = append(allDeposits, types.Deposit{
-				Time:          time.Unix(0, d.InsertTime*int64(time.Millisecond)),
+				Exchange:      types.ExchangeBinance,
+				Time:          datatype.Time(time.Unix(0, d.InsertTime*int64(time.Millisecond))),
 				Asset:         d.Asset,
 				Amount:        d.Amount,
 				Address:       d.Address,

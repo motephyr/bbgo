@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -20,6 +21,7 @@ import (
 func init() {
 	PnLCmd.Flags().String("session", "", "target exchange")
 	PnLCmd.Flags().String("symbol", "", "trading symbol")
+	PnLCmd.Flags().Bool("include-transfer", false, "convert transfer records into trades")
 	PnLCmd.Flags().Int("limit", 500, "number of trades")
 	RootCmd.AddCommand(PnLCmd)
 }
@@ -49,14 +51,6 @@ var PnLCmd = &cobra.Command{
 			return err
 		}
 
-		environ := bbgo.NewEnvironment()
-		if err := environ.ConfigureDatabase(ctx) ; err != nil {
-			return err
-		}
-
-		if err := environ.ConfigureExchangeSessions(userConfig); err != nil {
-			return err
-		}
 
 		sessionName, err := cmd.Flags().GetString("session")
 		if err != nil {
@@ -67,6 +61,7 @@ var PnLCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+
 		if len(symbol) == 0 {
 			return errors.New("--symbol [SYMBOL] is required")
 		}
@@ -76,12 +71,63 @@ var PnLCmd = &cobra.Command{
 			return err
 		}
 
+		environ := bbgo.NewEnvironment()
+		if err := environ.ConfigureDatabase(ctx); err != nil {
+			return err
+		}
+
+		if err := environ.ConfigureExchangeSessions(userConfig); err != nil {
+			return err
+		}
+
 		session, ok := environ.Session(sessionName)
 		if !ok {
 			return fmt.Errorf("session %s not found", sessionName)
 		}
 
+		if err := environ.Sync(ctx) ; err != nil {
+			return err
+		}
+
 		exchange := session.Exchange
+
+		market, ok := session.Market(symbol)
+		if !ok {
+			return fmt.Errorf("market config %s not found", symbol)
+		}
+
+		since := time.Now().AddDate(-1, 0, 0)
+		until := time.Now()
+
+		includeTransfer, err := cmd.Flags().GetBool("include-transfer")
+		if err != nil {
+			return err
+		}
+
+		if includeTransfer {
+			transferService, ok := exchange.(types.ExchangeTransferService)
+			if !ok {
+				return fmt.Errorf("session exchange %s does not implement transfer service", sessionName)
+			}
+
+			deposits, err := transferService.QueryDepositHistory(ctx, market.BaseCurrency, since, until)
+			if err != nil {
+				return err
+			}
+			_ = deposits
+
+			withdrawals, err := transferService.QueryWithdrawalHistory(ctx, market.BaseCurrency, since, until)
+			if err != nil {
+				return err
+			}
+			_ = withdrawals
+
+			// we need the backtest klines for the daily prices
+			backtestService := &service.BacktestService{DB: environ.DatabaseService.DB}
+			if err := backtestService.SyncKLineByInterval(ctx, exchange, symbol, types.Interval1d, since, until); err != nil {
+				return err
+			}
+		}
 
 		var trades []types.Trade
 		tradingFeeCurrency := exchange.PlatformFeeCurrency()
@@ -92,7 +138,7 @@ var PnLCmd = &cobra.Command{
 			trades, err = environ.TradeService.Query(service.QueryTradesOptions{
 				Exchange: exchange.Name(),
 				Symbol:   symbol,
-				Limit:	  limit,
+				Limit:    limit,
 			})
 		}
 
