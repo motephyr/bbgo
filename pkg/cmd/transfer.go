@@ -101,7 +101,11 @@ var TransferHistoryCmd = &cobra.Command{
 
 		var records timeSlice
 
-		exchange := session.Exchange
+		exchange, ok := session.Exchange.(types.ExchangeTransferService)
+		if !ok {
+			return fmt.Errorf("exchange session %s does not implement transfer service", sessionName)
+		}
+
 		deposits, err := exchange.QueryDepositHistory(ctx, asset, since, until)
 		if err != nil {
 			return err
@@ -113,7 +117,7 @@ var TransferHistoryCmd = &cobra.Command{
 			})
 		}
 
-		withdraws, err := exchange.QueryWithdrawHistory(ctx, asset, since, until)
+		withdraws, err := exchange.QueryWithdrawalHistory(ctx, asset, since, until)
 		if err != nil {
 			return err
 		}
@@ -132,7 +136,7 @@ var TransferHistoryCmd = &cobra.Command{
 			case types.Deposit:
 				logrus.Infof("%s: <--- DEPOSIT %f %s [%s]", record.Time, record.Amount, record.Asset, record.Status)
 
-			case types.Withdraw:
+			case types.Withdrawal:
 				logrus.Infof("%s: ---> WITHDRAW %f %s  [%s]", record.ApplyTime, record.Amount, record.Asset, record.Status)
 
 			default:
@@ -165,7 +169,7 @@ type BaselineStats struct {
 	BaselineBalance map[string]float64
 }
 
-func calBaselineStats(asset string, deposits []types.Deposit, withdraws []types.Withdraw) (stats BaselineStats) {
+func calBaselineStats(asset string, deposits []types.Deposit, withdraws []types.Withdrawal) (stats BaselineStats) {
 	stats.Asset = asset
 	stats.TotalDeposit = make(map[string]float64)
 	stats.TotalWithdraw = make(map[string]float64)
