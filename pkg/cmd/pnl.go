@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -11,14 +13,13 @@ import (
 	"github.com/c9s/bbgo/pkg/accounting"
 	"github.com/c9s/bbgo/pkg/accounting/pnl"
 	"github.com/c9s/bbgo/pkg/bbgo"
-	"github.com/c9s/bbgo/pkg/cmd/cmdutil"
 	"github.com/c9s/bbgo/pkg/service"
 	"github.com/c9s/bbgo/pkg/types"
 )
 
 func init() {
-	PnLCmd.Flags().String("exchange", "", "target exchange")
-	PnLCmd.Flags().String("symbol", "BTCUSDT", "trading symbol")
+	PnLCmd.Flags().String("session", "", "target exchange")
+	PnLCmd.Flags().String("symbol", "", "trading symbol")
 	PnLCmd.Flags().Int("limit", 500, "number of trades")
 	RootCmd.AddCommand(PnLCmd)
 }
@@ -30,12 +31,34 @@ var PnLCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
 
-		exchangeNameStr, err := cmd.Flags().GetString("exchange")
+		configFile, err := cmd.Flags().GetString("config")
 		if err != nil {
 			return err
 		}
 
-		exchangeName, err := types.ValidExchangeName(exchangeNameStr)
+		if len(configFile) == 0 {
+			return errors.New("--config option is required")
+		}
+
+		if _, err := os.Stat(configFile); os.IsNotExist(err) {
+			return err
+		}
+
+		userConfig, err := bbgo.Load(configFile, false)
+		if err != nil {
+			return err
+		}
+
+		environ := bbgo.NewEnvironment()
+		if err := environ.ConfigureDatabase(ctx) ; err != nil {
+			return err
+		}
+
+		if err := environ.ConfigureExchangeSessions(userConfig); err != nil {
+			return err
+		}
+
+		sessionName, err := cmd.Flags().GetString("session")
 		if err != nil {
 			return err
 		}
@@ -44,23 +67,21 @@ var PnLCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		if len(symbol) == 0 {
+			return errors.New("--symbol [SYMBOL] is required")
+		}
 
 		limit, err := cmd.Flags().GetInt("limit")
 		if err != nil {
 			return err
 		}
 
-		exchange, err := cmdutil.NewExchange(exchangeName)
-		if err != nil {
-			return err
+		session, ok := environ.Session(sessionName)
+		if !ok {
+			return fmt.Errorf("session %s not found", sessionName)
 		}
 
-
-		environ := bbgo.NewEnvironment()
-		if err := environ.ConfigureDatabase(ctx) ; err != nil {
-			return err
-		}
-
+		exchange := session.Exchange
 
 		var trades []types.Trade
 		tradingFeeCurrency := exchange.PlatformFeeCurrency()
