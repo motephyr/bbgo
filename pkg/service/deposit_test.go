@@ -11,7 +11,7 @@ import (
 	"github.com/c9s/bbgo/pkg/types"
 )
 
-func TestTransferService(t *testing.T) {
+func TestDepositService(t *testing.T) {
 	db, err := prepareDB(t)
 	if err != nil {
 		t.Fatal(err)
@@ -20,21 +20,9 @@ func TestTransferService(t *testing.T) {
 	defer db.Close()
 
 	xdb := sqlx.NewDb(db.DB, "sqlite3")
-	service := &TransferService{DB: xdb}
+	service := &DepositService{DB: xdb}
 
-	err = service.InsertWithdrawal(types.Withdrawal{
-		Exchange:       types.ExchangeMax,
-		Asset:          "BTC",
-		Amount:         0.0001,
-		Address:        "test",
-		TransactionID:  "01",
-		TransactionFee: 0.0001,
-		Network:        "omni",
-		ApplyTime:      datatype.Time(time.Now()),
-	})
-	assert.NoError(t, err)
-
-	err = service.InsertDeposit(types.Deposit{
+	err = service.Insert(types.Deposit{
 		Exchange:      types.ExchangeMax,
 		Time:          datatype.Time(time.Now()),
 		Amount:        0.001,
@@ -44,4 +32,8 @@ func TestTransferService(t *testing.T) {
 		Status:        types.DepositSuccess,
 	})
 	assert.NoError(t, err)
+
+	deposits, err := service.Query(types.ExchangeMax)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, deposits)
 }
