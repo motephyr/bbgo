@@ -17,6 +17,8 @@ type SyncService struct {
 	TradeService  *TradeService
 	OrderService  *OrderService
 	RewardService *RewardService
+	WithdrawService *WithdrawService
+	DepositService *DepositService
 }
 
 func (s *SyncService) SyncRewards(ctx context.Context, exchange types.Exchange) error {
