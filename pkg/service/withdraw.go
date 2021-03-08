@@ -10,6 +10,20 @@ type WithdrawService struct {
 	DB *sqlx.DB
 }
 
+func (s *WithdrawService) QueryLast(ex types.ExchangeName, limit int) ([]types.Withdraw, error) {
+	sql := "SELECT * FROM `withdraws` WHERE `exchange` = :exchange ORDER BY `time` DESC LIMIT :limit"
+	rows, err := s.DB.NamedQuery(sql, map[string]interface{}{
+		"exchange": ex,
+		"limit":    limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+	return s.scanRows(rows)
+}
+
 func (s *WithdrawService) Query(exchangeName types.ExchangeName) ([]types.Withdraw, error) {
 	args := map[string]interface{}{
 		"exchange": exchangeName,
@@ -44,4 +58,3 @@ func (s *WithdrawService) Insert(withdrawal types.Withdraw) error {
 	_, err := s.DB.NamedExec(sql, withdrawal)
 	return err
 }
-

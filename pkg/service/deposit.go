@@ -10,6 +10,20 @@ type DepositService struct {
 	DB *sqlx.DB
 }
 
+func (s *DepositService) QueryLast(ex types.ExchangeName, limit int) ([]types.Deposit, error) {
+	sql := "SELECT * FROM `deposits` WHERE `exchange` = :exchange ORDER BY `time` DESC LIMIT :limit"
+	rows, err := s.DB.NamedQuery(sql, map[string]interface{}{
+		"exchange": ex,
+		"limit":    limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+	return s.scanRows(rows)
+}
+
 func (s *DepositService) Query(exchangeName types.ExchangeName) ([]types.Deposit, error) {
 	args := map[string]interface{}{
 		"exchange": exchangeName,
