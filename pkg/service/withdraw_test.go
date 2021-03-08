@@ -33,4 +33,8 @@ func TestWithdrawService(t *testing.T) {
 		ApplyTime:      datatype.Time(time.Now()),
 	})
 	assert.NoError(t, err)
+
+	withdraws, err := service.Query(types.ExchangeMax)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, withdraws)
 }
