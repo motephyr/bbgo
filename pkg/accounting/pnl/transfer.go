@@ -46,8 +46,8 @@ type TransferConverter struct {
 	dailyAveragePrices DailyAveragePriceMap
 }
 
-func (c *TransferConverter) convertWithdrawals(withdrawals []types.Withdrawal) (trades []types.Trade, err error) {
-	for _, withdrawal := range withdrawals {
+func (c *TransferConverter) convertWithdraws(withdraws []types.Withdraw) (trades []types.Trade, err error) {
+	for _, withdrawal := range withdraws {
 		trades = append(trades, types.Trade{
 			GID:           0,
 			ID:            0,
@@ -70,7 +70,7 @@ func (c *TransferConverter) convertWithdrawals(withdrawals []types.Withdrawal) (
 }
 
 func (c *TransferConverter) QueryAndConvert(ctx context.Context, ex types.ExchangeTransferService, since, until time.Time) ([]types.Trade, error) {
-	withdrawals, err := ex.QueryWithdrawalHistory(ctx, c.BaseAsset, since, until)
+	withdrawals, err := ex.QueryWithdrawHistory(ctx, c.BaseAsset, since, until)
 	if err != nil {
 		return nil, err
 	}

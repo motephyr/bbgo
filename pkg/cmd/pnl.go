@@ -116,7 +116,7 @@ var PnLCmd = &cobra.Command{
 			}
 			_ = deposits
 
-			withdrawals, err := transferService.QueryWithdrawalHistory(ctx, market.BaseCurrency, since, until)
+			withdrawals, err := transferService.QueryWithdrawHistory(ctx, market.BaseCurrency, since, until)
 			if err != nil {
 				return err
 			}

@@ -194,7 +194,7 @@ func (e *Exchange) QueryIsolatedMarginAccount(ctx context.Context, symbols ...st
 	return toGlobalIsolatedMarginAccount(account), nil
 }
 
-func (e *Exchange) QueryWithdrawalHistory(ctx context.Context, asset string, since, until time.Time) (allWithdraws []types.Withdrawal, err error) {
+func (e *Exchange) QueryWithdrawHistory(ctx context.Context, asset string, since, until time.Time) (allWithdraws []types.Withdraw, err error) {
 
 	startTime := since
 	txIDs := map[string]struct{}{}
@@ -247,7 +247,7 @@ func (e *Exchange) QueryWithdrawalHistory(ctx context.Context, asset string, sin
 			}
 
 			txIDs[d.TxID] = struct{}{}
-			allWithdraws = append(allWithdraws, types.Withdrawal{
+			allWithdraws = append(allWithdraws, types.Withdraw{
 				Exchange:        types.ExchangeBinance,
 				ApplyTime:       datatype.Time(time.Unix(0, d.ApplyTime*int64(time.Millisecond))),
 				Asset:           d.Asset,

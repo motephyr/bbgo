@@ -236,7 +236,7 @@ func (e Exchange) QueryDepositHistory(ctx context.Context, asset string, since, 
 	return nil, nil
 }
 
-func (e Exchange) QueryWithdrawalHistory(ctx context.Context, asset string, since, until time.Time) (allWithdraws []types.Withdrawal, err error) {
+func (e Exchange) QueryWithdrawHistory(ctx context.Context, asset string, since, until time.Time) (allWithdraws []types.Withdraw, err error) {
 	return nil, nil
 }
 

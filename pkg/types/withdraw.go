@@ -6,7 +6,7 @@ import (
 	"github.com/c9s/bbgo/pkg/datatype"
 )
 
-type Withdrawal struct {
+type Withdraw struct {
 	GID        int64        `json:"gid" db:"gid"`
 	Exchange   ExchangeName `json:"exchange" db:"exchange"`
 	Asset      string       `json:"asset" db:"asset"`
@@ -23,6 +23,6 @@ type Withdrawal struct {
 	Network                string        `json:"network" db:"network"`
 }
 
-func (w Withdrawal) EffectiveTime() time.Time {
+func (w Withdraw) EffectiveTime() time.Time {
 	return w.ApplyTime.Time()
 }

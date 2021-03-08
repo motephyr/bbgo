@@ -22,7 +22,7 @@ func TestWithdrawService(t *testing.T) {
 	xdb := sqlx.NewDb(db.DB, "sqlite3")
 	service := &WithdrawService{DB: xdb}
 
-	err = service.Insert(types.Withdrawal{
+	err = service.Insert(types.Withdraw{
 		Exchange:       types.ExchangeMax,
 		Asset:          "BTC",
 		Amount:         0.0001,
@@ -37,4 +37,5 @@ func TestWithdrawService(t *testing.T) {
 	withdraws, err := service.Query(types.ExchangeMax)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, withdraws)
+	assert.Equal(t, types.ExchangeMax, withdraws[0].Exchange)
 }

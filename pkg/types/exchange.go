@@ -88,8 +88,7 @@ type Exchange interface {
 
 type ExchangeTransferService interface {
 	QueryDepositHistory(ctx context.Context, asset string, since, until time.Time) (allDeposits []Deposit, err error)
-
-	QueryWithdrawalHistory(ctx context.Context, asset string, since, until time.Time) (allWithdraws []Withdrawal, err error)
+	QueryWithdrawHistory(ctx context.Context, asset string, since, until time.Time) (allWithdraws []Withdraw, err error)
 }
 
 type ExchangeRewardService interface {
